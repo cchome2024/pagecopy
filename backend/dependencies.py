@@ -24,6 +24,7 @@ def get_snapshot_service() -> SnapshotService:
         request_timeout=settings.request_timeout,
         browser_renderer=_browser_renderer(),
         js_heavy_hosts=settings.js_heavy_hosts,
+        session_store=settings.playwright_session_dir,
     )
 
 

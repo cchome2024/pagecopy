@@ -68,30 +68,34 @@ function App() {
   const [historyError, setHistoryError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [requestError, setRequestError] = useState<string | null>(null);
-  const [copyMessage, setCopyMessage] = useState<string | null>(null);
+  const [historyNotice, setHistoryNotice] = useState<string | null>(null);
   const [selectedHistoryIds, setSelectedHistoryIds] = useState<Set<string>>(new Set());
+  const [cookieHeader, setCookieHeader] = useState('');
 
   const urls = useMemo(() => parseUrls(urlsText), [urlsText]);
   const invalidUrls = urls.filter((url) => !isValidUrl(url));
   const canSubmit = urls.length > 0 && invalidUrls.length === 0 && !isSubmitting;
 
-  const selectableHistory = useMemo(
-    () => history.filter((entry) => Boolean(entry.archived_relative_url)),
+  const allHistoryIds = useMemo(() => history.map((entry) => entry.id), [history]);
+  const copyableIds = useMemo(
+    () =>
+      history
+        .filter((entry) => Boolean(entry.archived_relative_url))
+        .map((entry) => entry.id),
     [history],
   );
-  const selectableIds = useMemo(() => selectableHistory.map((entry) => entry.id), [selectableHistory]);
 
   useEffect(() => {
     setSelectedHistoryIds((prev) => {
       const next = new Set<string>();
-      selectableIds.forEach((id) => {
+      allHistoryIds.forEach((id) => {
         if (prev.has(id)) {
           next.add(id);
         }
       });
       return next;
     });
-  }, [history, selectableIds]);
+  }, [history, allHistoryIds]);
 
   const fetchHistory = async () => {
     try {
@@ -118,7 +122,7 @@ function App() {
     event.preventDefault();
     setRequestError(null);
     setFormError(null);
-    setCopyMessage(null);
+    setHistoryNotice(null);
 
     if (urls.length === 0) {
       setFormError('请至少输入一个有效的 URL。 / Please enter at least one valid URL.');
@@ -133,6 +137,7 @@ function App() {
     const body: SnapshotRequestBody = {
       urls,
       force_browser: forceBrowser,
+      cookie_header: cookieHeader.trim() ? cookieHeader.trim() : null,
     };
 
     try {
@@ -177,10 +182,10 @@ function App() {
 
   const toggleSelectAll = () => {
     setSelectedHistoryIds((prev) => {
-      if (prev.size === selectableIds.length) {
+      if (prev.size === allHistoryIds.length) {
         return new Set();
       }
-      return new Set(selectableIds);
+      return new Set(allHistoryIds);
     });
   };
 
@@ -191,7 +196,7 @@ function App() {
       .filter((value) => Boolean(value));
 
     if (links.length === 0) {
-      setCopyMessage('没有可复制的链接 / No links to copy.');
+      setHistoryNotice('没有可复制的链接 / No links to copy.');
       return;
     }
 
@@ -201,10 +206,40 @@ function App() {
       if (!success) {
         throw new Error('Clipboard API unavailable');
       }
-      setCopyMessage(`已复制 ${links.length} 条链接 / Copied ${links.length} link(s).`);
+      setHistoryNotice(`已复制 ${links.length} 条链接 / Copied ${links.length} link(s).`);
     } catch (error) {
       console.error(error);
-      setCopyMessage('复制失败 / Copy failed.');
+      setHistoryNotice('复制失败 / Copy failed.');
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selectedHistoryIds.size === 0) {
+      setHistoryNotice('请选择要删除的记录 / Select at least one row to delete.');
+      return;
+    }
+    const ids = Array.from(selectedHistoryIds);
+    const confirmDelete = window.confirm(`确认删除 ${ids.length} 条历史记录吗？`);
+    if (!confirmDelete) {
+      return;
+    }
+    setHistoryNotice(null);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/history`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids }),
+      });
+      if (!response.ok) {
+        throw new Error(`删除失败，状态码 ${response.status}`);
+      }
+      const data: { deleted: number } = await response.json();
+      setHistoryNotice(`已删除 ${data.deleted} 条记录 / Deleted ${data.deleted} entrie(s).`);
+      setSelectedHistoryIds(new Set());
+      await fetchHistory();
+    } catch (error) {
+      console.error(error);
+      setHistoryNotice('删除失败 / Delete failed.');
     }
   };
 
@@ -238,6 +273,22 @@ function App() {
             />
             <span>对 JS 动态页面强制使用浏览器渲染（较慢）</span>
           </label>
+
+          <div className="optional-block">
+            <label htmlFor="cookie-input">
+              可选：粘贴登录后的 Cookie Header
+              <span className="helper">
+                如果页面需要登录，可在浏览器 DevTools 里复制 `Cookie` 头粘贴到这里，服务端会带着该登录态抓取。
+              </span>
+            </label>
+            <textarea
+              id="cookie-input"
+              placeholder="cookie1=value1; cookie2=value2"
+              rows={3}
+              value={cookieHeader}
+              onChange={(event) => setCookieHeader(event.target.value)}
+            />
+          </div>
 
           {formError && <p className="form-error">{formError}</p>}
           {requestError && <p className="form-error">{requestError}</p>}
@@ -313,8 +364,8 @@ function App() {
         {historyError && <p className="form-error">{historyError}</p>}
         <div className="history-actions">
           <div className="history-buttons">
-            <button type="button" onClick={toggleSelectAll} disabled={selectableIds.length === 0}>
-              {selectedHistoryIds.size === selectableIds.length ? '取消全选' : '全选'}
+            <button type="button" onClick={toggleSelectAll} disabled={allHistoryIds.length === 0}>
+              {selectedHistoryIds.size === allHistoryIds.length ? '取消全选' : '全选'}
             </button>
             <button
               type="button"
@@ -325,8 +376,15 @@ function App() {
             </button>
             <button
               type="button"
-              onClick={() => copyLinks(selectableIds)}
-              disabled={selectableIds.length === 0}
+              onClick={handleDeleteSelected}
+              disabled={selectedHistoryIds.size === 0}
+            >
+              删除选中
+            </button>
+            <button
+              type="button"
+              onClick={() => copyLinks(copyableIds)}
+              disabled={copyableIds.length === 0}
             >
               复制全部可用链接
             </button>
@@ -334,7 +392,7 @@ function App() {
               刷新
             </button>
           </div>
-          {copyMessage && <p className="copy-feedback">{copyMessage}</p>}
+          {historyNotice && <p className="copy-feedback">{historyNotice}</p>}
         </div>
         {history.length > 0 ? (
           <div className="results-table-wrapper">
@@ -344,7 +402,7 @@ function App() {
                   <th>
                     <input
                       type="checkbox"
-                      checked={selectableIds.length > 0 && selectedHistoryIds.size === selectableIds.length}
+                      checked={allHistoryIds.length > 0 && selectedHistoryIds.size === allHistoryIds.length}
                       onChange={() => toggleSelectAll()}
                       aria-label="Select all"
                     />
@@ -360,13 +418,11 @@ function App() {
               <tbody>
                 {history.map((entry) => {
                   const absoluteUrl = buildSnapshotUrl(entry.archived_relative_url, entry.archived_url);
-                  const canSelect = Boolean(entry.archived_relative_url);
                   return (
                     <tr key={entry.id}>
                       <td>
                         <input
                           type="checkbox"
-                          disabled={!canSelect}
                           checked={selectedHistoryIds.has(entry.id)}
                           onChange={() => toggleHistorySelection(entry.id)}
                         />

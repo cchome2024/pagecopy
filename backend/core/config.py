@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     request_timeout: float = 20.0
     browser_timeout: float = 45.0
     playwright_headless: bool = True
+    playwright_session_dir: Path | None = Path("./data/sessions")
     cors_origins: List[str] = Field(
         default_factory=lambda: ["http://localhost:5173", "http://localhost:3000"]
     )

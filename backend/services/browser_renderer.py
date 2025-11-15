@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+from pathlib import Path
 
 try:  # pragma: no cover - import-time optional dependency
     from playwright.sync_api import Error as PlaywrightError, sync_playwright  # type: ignore
@@ -26,16 +27,26 @@ class BrowserRenderer:
         # Playwright expects milliseconds for most timeouts.
         self.timeout_ms = int(timeout_seconds * 1000)
 
-    async def render(self, url: str) -> str:
+    async def render(
+        self,
+        url: str,
+        storage_state: Path | None = None,
+        cookies: list[dict[str, str]] | None = None,
+    ) -> str:
         if sync_playwright is None:
             raise BrowserRenderingError(
                 "Playwright is not installed. Run: pip install playwright && playwright install chromium"
             )
 
         loop = asyncio.get_running_loop()
-        return await loop.run_in_executor(None, self._render_sync, url)
+        return await loop.run_in_executor(None, self._render_sync, url, storage_state, cookies)
 
-    def _render_sync(self, url: str) -> str:
+    def _render_sync(
+        self,
+        url: str,
+        storage_state: Path | None = None,
+        cookies: list[dict[str, str]] | None = None,
+    ) -> str:
         try:
             with sync_playwright() as playwright:
                 browser = playwright.chromium.launch(headless=self._resolve_headless())
@@ -46,7 +57,10 @@ class BrowserRenderer:
                         "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
                         "Referer": "https://mp.weixin.qq.com/",
                     },
+                    storage_state=str(storage_state) if storage_state else None,
                 )
+                if cookies:
+                    context.add_cookies(cookies)
                 page = context.new_page()
                 page.set_default_navigation_timeout(self.timeout_ms)
                 page.goto(url, wait_until="networkidle", timeout=self.timeout_ms)

@@ -38,6 +38,13 @@ class HistoryRepository:
         async with self._lock:
             return await asyncio.to_thread(self._read_last, limit)
 
+    async def delete(self, ids: Iterable[str]) -> int:
+        ids_set = {item for item in ids if item}
+        if not ids_set or not self.file_path.exists():
+            return 0
+        async with self._lock:
+            return await asyncio.to_thread(self._delete_sync, ids_set)
+
     def _write(self, chunk: str) -> None:
         with self.file_path.open("a", encoding="utf-8") as handler:
             handler.write(chunk)
@@ -60,3 +67,21 @@ class HistoryRepository:
         ]
         entries.reverse()
         return entries
+
+    def _delete_sync(self, ids: set[str]) -> int:
+        with self.file_path.open("r", encoding="utf-8") as handler:
+            lines = handler.readlines()
+        kept_lines = []
+        removed = 0
+        for line in lines:
+            if not line.strip():
+                continue
+            obj = json.loads(line)
+            entry_id = obj.get("id")
+            if entry_id in ids:
+                removed += 1
+                continue
+            kept_lines.append(line)
+        with self.file_path.open("w", encoding="utf-8") as handler:
+            handler.writelines(kept_lines)
+        return removed

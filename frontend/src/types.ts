@@ -3,6 +3,7 @@ export type SnapshotStatus = 'success' | 'failed';
 export interface SnapshotRequestBody {
   urls: string[];
   force_browser: boolean;
+  cookie_header?: string | null;
 }
 
 export interface SnapshotResult {

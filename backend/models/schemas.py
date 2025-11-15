@@ -8,6 +8,7 @@ from pydantic import BaseModel, HttpUrl
 class SnapshotRequest(BaseModel):
     urls: List[HttpUrl]
     force_browser: bool = False
+    cookie_header: Optional[str] = None
 
 
 class SnapshotResponseItem(BaseModel):
@@ -34,3 +35,11 @@ class HistoryRecord(BaseModel):
 
 class HistoryResponse(BaseModel):
     items: List[HistoryRecord]
+
+
+class HistoryDeleteRequest(BaseModel):
+    ids: List[str]
+
+
+class HistoryDeleteResponse(BaseModel):
+    deleted: int

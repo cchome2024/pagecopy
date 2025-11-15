@@ -9,6 +9,8 @@ from fastapi import APIRouter, Depends
 from backend.core.config import settings
 from backend.dependencies import get_history_repository, get_snapshot_service
 from backend.models.schemas import (
+    HistoryDeleteRequest,
+    HistoryDeleteResponse,
     HistoryRecord,
     HistoryResponse,
     SnapshotRequest,
@@ -35,7 +37,11 @@ async def create_snapshots(
     for url in payload.urls:
         logger.info("Processing snapshot request", extra={"url": str(url)})
         try:
-            metadata = await service.create_snapshot(str(url), force_browser=payload.force_browser)
+            metadata = await service.create_snapshot(
+                str(url),
+                force_browser=payload.force_browser,
+                cookie_header=payload.cookie_header,
+            )
             logger.info(
                 "Snapshot created",
                 extra={"url": str(url), "file": str(metadata.archived_path)},
@@ -111,3 +117,12 @@ async def get_history(
         for entry in records
     ]
     return HistoryResponse(items=items)
+
+
+@router.delete("/history", response_model=HistoryDeleteResponse)
+async def delete_history(
+    payload: HistoryDeleteRequest,
+    history_repo: HistoryRepository = Depends(get_history_repository),
+) -> HistoryDeleteResponse:
+    deleted = await history_repo.delete(payload.ids)
+    return HistoryDeleteResponse(deleted=deleted)

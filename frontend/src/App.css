@@ -99,6 +99,26 @@
   margin: 0;
 }
 
+.optional-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.optional-block textarea {
+  border-radius: 8px;
+  border: 1px solid #cbd5f5;
+  padding: 0.75rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  resize: vertical;
+}
+
+.optional-block textarea:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+}
+
 .results-header {
   display: flex;
   flex-direction: column;
