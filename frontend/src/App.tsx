@@ -37,6 +37,28 @@ const buildSnapshotUrl = (relative?: string | null, absolute?: string | null) =>
   return absolute ?? '';
 };
 
+const copyText = async (text: string) => {
+  if (navigator?.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text);
+    return true;
+  }
+  // Fallback for browsers/contexts without Clipboard API (some headless deployments)
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.style.position = 'fixed';
+  textarea.style.opacity = '0';
+  document.body.appendChild(textarea);
+  textarea.select();
+  try {
+    const success = document.execCommand('copy');
+    return success;
+  } catch {
+    return false;
+  } finally {
+    document.body.removeChild(textarea);
+  }
+};
+
 function App() {
   const [urlsText, setUrlsText] = useState('');
   const [forceBrowser, setForceBrowser] = useState(false);
@@ -173,8 +195,12 @@ function App() {
       return;
     }
 
+    const text = links.join('\n');
     try {
-      await navigator.clipboard.writeText(links.join('\n'));
+      const success = await copyText(text);
+      if (!success) {
+        throw new Error('Clipboard API unavailable');
+      }
       setCopyMessage(`已复制 ${links.length} 条链接 / Copied ${links.length} link(s).`);
     } catch (error) {
       console.error(error);
