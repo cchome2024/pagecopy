@@ -1,0 +1,226 @@
+.app-shell {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.hero {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.hero h1 {
+  font-size: 2rem;
+  margin: 0;
+}
+
+.hero-subtitle {
+  margin: 0;
+  color: #64748b;
+}
+
+.panel {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.08);
+}
+
+.snapshot-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.snapshot-form label {
+  font-weight: 600;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.snapshot-form textarea {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  border-radius: 8px;
+  border: 1px solid #cbd5f5;
+  padding: 0.75rem;
+  resize: vertical;
+  min-height: 8rem;
+}
+
+.snapshot-form textarea:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+}
+
+.helper {
+  font-weight: 400;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.checkbox-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  font-weight: 500;
+}
+
+.snapshot-form button {
+  border: none;
+  border-radius: 999px;
+  padding: 0.85rem 1.5rem;
+  font-weight: 600;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff;
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.snapshot-form button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.snapshot-form button:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+.form-error {
+  color: #dc2626;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.results-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+}
+
+.results-table-wrapper {
+  overflow-x: auto;
+}
+
+.results-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.results-table th,
+.results-table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: left;
+}
+
+.results-table th {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+}
+
+.status-pill {
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  text-transform: capitalize;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.status-pill.success {
+  background: rgba(34, 197, 94, 0.15);
+  color: #15803d;
+}
+
+.status-pill.failed {
+  background: rgba(248, 113, 113, 0.2);
+  color: #b91c1c;
+}
+
+.muted {
+  color: #94a3b8;
+}
+
+.error-text {
+  color: #b91c1c;
+}
+
+.history-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.history-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.history-buttons button {
+  border: none;
+  border-radius: 8px;
+  padding: 0.45rem 0.9rem;
+  font-weight: 500;
+  background: #e0e7ff;
+  color: #312e81;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.history-buttons button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.history-buttons button:not(:disabled):hover {
+  background: #c7d2fe;
+}
+
+.copy-feedback {
+  margin: 0;
+  color: #10b981;
+  font-weight: 500;
+}
+
+.copy-inline {
+  border: 1px solid #c7d2fe;
+  background: transparent;
+  color: #4f46e5;
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.copy-inline:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.copy-inline:not(:disabled):hover {
+  background: rgba(79, 70, 229, 0.08);
+}
+
+@media (max-width: 640px) {
+  .app-shell {
+    padding: 1.5rem 1rem 2rem;
+  }
+
+  .panel {
+    padding: 1.25rem;
+  }
+}
