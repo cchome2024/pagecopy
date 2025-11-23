@@ -42,14 +42,56 @@ const normalizeUrl = (value: string): string => {
 };
 
 const buildSnapshotUrl = (relative?: string | null, absolute?: string | null) => {
+  // 优先使用绝对URL（如果后端配置正确）
+  if (absolute) {
+    return absolute;
+  }
+  
+  // 如果有相对路径，构建完整URL
   if (relative) {
-    try {
-      return new URL(relative, API_BASE_URL).toString();
-    } catch {
-      // ignore malformed base
+    // 如果 relative 是绝对路径（以 / 开头）
+    if (relative.startsWith('/')) {
+      // 获取当前页面的 base path（例如 /pagecopy/）
+      const basePath = import.meta.env.BASE_URL || '/';
+      // 移除 base path 末尾的斜杠（如果有）
+      const normalizedBase = basePath.endsWith('/') ? basePath.slice(0, -1) : basePath;
+      
+      // 如果 relative 是 /snapshots/...，需要加上 base path
+      // 例如：/snapshots/file.html -> /pagecopy/snapshots/file.html
+      const fullRelativePath = `${normalizedBase}${relative}`;
+      
+      try {
+        // 优先尝试使用 API_BASE_URL（如果配置了）
+        // 检查 API_BASE_URL 是否与当前页面在同一域名下
+        const apiUrl = new URL(API_BASE_URL);
+        const currentOrigin = window.location.origin;
+        
+        if (apiUrl.origin === currentOrigin) {
+          // 如果API和前端在同一域名下，使用当前页面的 origin + base path + relative
+          return `${currentOrigin}${fullRelativePath}`;
+        } else {
+          // 如果API在不同域名/端口，使用 API_BASE_URL + relative（不添加 base path）
+          return new URL(relative, API_BASE_URL).toString();
+        }
+      } catch {
+        // 如果 API_BASE_URL 无效，使用当前页面的 origin + base path + relative
+        try {
+          return `${window.location.origin}${fullRelativePath}`;
+        } catch {
+          // ignore malformed URL
+        }
+      }
+    } else {
+      // 相对路径，使用当前页面的基础URL
+      try {
+        return new URL(relative, window.location.href).toString();
+      } catch {
+        // ignore malformed URL
+      }
     }
   }
-  return absolute ?? '';
+  
+  return '';
 };
 
 const copyText = async (text: string) => {
