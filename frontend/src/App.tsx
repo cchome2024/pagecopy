@@ -42,12 +42,37 @@ const normalizeUrl = (value: string): string => {
 };
 
 const buildSnapshotUrl = (relative?: string | null, absolute?: string | null) => {
-  // 优先使用绝对URL（如果后端配置正确）
-  if (absolute) {
+  // 检查绝对URL是否可用（不是 localhost，且与当前页面在同一域名或可访问）
+  const isAbsoluteUrlValid = (url: string): boolean => {
+    try {
+      const urlObj = new URL(url);
+      const currentOrigin = window.location.origin;
+      // 如果指向 localhost 或不同域名，认为不可用
+      if (urlObj.hostname === 'localhost' || urlObj.hostname === '127.0.0.1') {
+        return false;
+      }
+      // 如果与当前页面在同一域名，可以使用
+      if (urlObj.origin === currentOrigin) {
+        return true;
+      }
+      // 其他情况，如果API_BASE_URL配置了且与absolute URL的origin相同，可以使用
+      try {
+        const apiUrl = new URL(API_BASE_URL);
+        return urlObj.origin === apiUrl.origin;
+      } catch {
+        return false;
+      }
+    } catch {
+      return false;
+    }
+  };
+
+  // 只有当绝对URL有效时才使用它
+  if (absolute && isAbsoluteUrlValid(absolute)) {
     return absolute;
   }
   
-  // 如果有相对路径，构建完整URL
+  // 否则使用相对路径构建URL
   if (relative) {
     // 如果 relative 是绝对路径（以 / 开头）
     if (relative.startsWith('/')) {
@@ -61,7 +86,6 @@ const buildSnapshotUrl = (relative?: string | null, absolute?: string | null) =>
       const fullRelativePath = `${normalizedBase}${relative}`;
       
       try {
-        // 优先尝试使用 API_BASE_URL（如果配置了）
         // 检查 API_BASE_URL 是否与当前页面在同一域名下
         const apiUrl = new URL(API_BASE_URL);
         const currentOrigin = window.location.origin;
@@ -91,7 +115,8 @@ const buildSnapshotUrl = (relative?: string | null, absolute?: string | null) =>
     }
   }
   
-  return '';
+  // 如果都没有，尝试使用绝对URL（即使可能不可用）
+  return absolute ?? '';
 };
 
 const copyText = async (text: string) => {
