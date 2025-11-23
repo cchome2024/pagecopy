@@ -19,11 +19,26 @@ const parseUrls = (value: string) =>
 
 const isValidUrl = (value: string) => {
   try {
-    new URL(value);
+    // 如果已经有协议，直接验证
+    if (value.includes('://')) {
+      new URL(value);
+      return true;
+    }
+    // 如果没有协议，尝试添加 https:// 来验证
+    new URL(`https://${value}`);
     return true;
   } catch {
     return false;
   }
+};
+
+const normalizeUrl = (value: string): string => {
+  // 如果已经有协议，直接返回
+  if (value.includes('://')) {
+    return value;
+  }
+  // 如果没有协议，添加 https://
+  return `https://${value}`;
 };
 
 const buildSnapshotUrl = (relative?: string | null, absolute?: string | null) => {
@@ -134,8 +149,10 @@ function App() {
     }
 
     setIsSubmitting(true);
+    // 规范化URL，确保都有协议
+    const normalizedUrls = urls.map(normalizeUrl);
     const body: SnapshotRequestBody = {
-      urls,
+      urls: normalizedUrls,
       force_browser: forceBrowser,
       cookie_header: cookieHeader.trim() ? cookieHeader.trim() : null,
     };
