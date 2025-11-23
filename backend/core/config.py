@@ -18,7 +18,11 @@ class Settings(BaseSettings):
     playwright_headless: bool = True
     playwright_session_dir: Path | None = Path("./data/sessions")
     cors_origins: List[str] = Field(
-        default_factory=lambda: ["http://localhost:5173", "http://localhost:3000"]
+        default_factory=lambda: [
+            "http://localhost:5173",
+            "http://localhost:3000",
+            "http://www.chenchen.city",
+        ]
     )
     js_heavy_hosts: List[str] = Field(default_factory=lambda: ["mp.weixin.qq.com"])
 
